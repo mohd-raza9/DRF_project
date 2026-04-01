@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Manager</title>
+</head>
+<body>
+
+<h2>Student Manager</h2>
+
+<input type="text" id="name" placeholder="Name">
+<input type="number" id="age" placeholder="Age">
+<input type="email" id="email" placeholder="Email">
+<button onclick="addStudent()">Add</button>
+
+<h3>Students:</h3>
+<ul id="list"></ul>
+
+<script>
+const API = "http://127.0.0.1:8000/students/";
+
+function fetchStudents() {
+    fetch(API)
+    .then(res => res.json())
+    .then(data => {
+        const list = document.getElementById("list");
+        list.innerHTML = "";
+
+        data.forEach(s => {
+            list.innerHTML += `
+                <li>
+                    ${s.name} (${s.age})
+                    <button onclick="editStudent(${s.id}, '${s.name}', ${s.age}, '${s.email}')">Edit</button>
+                    <button onclick="deleteStudent(${s.id})">Delete</button>
+                </li>
+            `;
+        });
+    })
+    .catch(err => console.log(err));
+}
+
+function addStudent() {
+    const name = document.getElementById("name").value;
+    const age = document.getElementById("age").value;
+    const email = document.getElementById("email").value;
+
+    let url = "http://127.0.0.1:8000/students/";
+    let method = "POST";
+
+    if (currentId !== null) {
+        url = url + currentId + "/";
+        method = "PUT";
+    }
+
+    fetch(url, {
+        method: method,
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, age, email })
+    })
+    .then(() => {
+        fetchStudents();
+
+        // reset form
+        currentId = null;
+        document.getElementById("name").value = "";
+        document.getElementById("age").value = "";
+        document.getElementById("email").value = "";
+    });
+}
+
+
+function deleteStudent(id) {
+    fetch(API + id + "/", {
+        method: "DELETE"
+    })
+    .then(() => fetchStudents());
+}
+
+let currentId = null;
+
+function editStudent(id, name, age, email) {
+    document.getElementById("name").value = name;
+    document.getElementById("age").value = age;
+    document.getElementById("email").value = email;
+
+    currentId = id; // 🔥 save id for update
+}
+
+window.onload = fetchStudents;
+</script>
+
+</body>
+</html>
